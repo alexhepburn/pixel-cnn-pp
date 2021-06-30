@@ -52,6 +52,8 @@ def discretized_mix_logistic_loss(x, l):
     # sub-pixels
     x = x.contiguous()
     x = x.unsqueeze(-1) + Variable(torch.zeros(xs + [nr_mix]).cuda(), requires_grad=False)
+    # x = x.unsqueeze(-1) + Variable(torch.zeros(xs + [nr_mix]), requires_grad=False)
+
     m2 = (means[:, :, :, 1, :] + coeffs[:, :, :, 0, :]
                 * x[:, :, :, 0, :]).view(xs[0], xs[1], xs[2], 1, nr_mix)
 
@@ -96,7 +98,7 @@ def discretized_mix_logistic_loss(x, l):
     log_probs        = cond * log_cdf_plus + (1. - cond) * inner_out
     log_probs        = torch.sum(log_probs, dim=3) + log_prob_from_logits(logit_probs)
     
-    return -torch.sum(log_sum_exp(log_probs))
+    return torch.sum(torch.sum(log_sum_exp(log_probs), axis=-1), axis=-1)
 
 
 def discretized_mix_logistic_loss_1d(x, l):
@@ -117,6 +119,7 @@ def discretized_mix_logistic_loss_1d(x, l):
     # sub-pixels
     x = x.contiguous()
     x = x.unsqueeze(-1) + Variable(torch.zeros(xs + [nr_mix]).cuda(), requires_grad=False)
+    # x = x.unsqueeze(-1) + Variable(torch.zeros(xs + [nr_mix]), requires_grad=False)
 
     # means = torch.cat((means[:, :, :, 0, :].unsqueeze(3), m2, m3), dim=3)
     centered_x = x - means
@@ -261,6 +264,6 @@ def load_part_of_model(model, path):
                 model.state_dict()[name].copy_(param)
                 added += 1
             except Exception as e:
-                print e
+                print(e)
                 pass
     print('added %s of params:' % (added / float(len(model.state_dict().keys()))))
